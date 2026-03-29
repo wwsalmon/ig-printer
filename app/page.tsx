@@ -10,40 +10,58 @@ import {FaComments, FaHeart} from "react-icons/fa";
 export default function Page() {
     const [shortcode, setShortcode] = useState("");
     const [postData, setPostData] = useState<APIPostData | null>(null);
+    const [showBig, setShowBig] = useState(true);
+    const [numSmallOnPage1, setNumSmallOnPage1] = useState(2);
+    const [numColsOnPage1, setNumColsOnPage1] = useState(2);
+    const [numColsOnPage2, setNumColsOnPage2] = useState(2);
 
     async function onSubmit() {
         try {
+            // get postData using server function
             const json = await getPostFromShortcode(shortcode);
-            console.log(json);
-            setPostData(json.data.xdt_shortcode_media);
+            const thisPostData = json.data.xdt_shortcode_media;
+            if (!thisPostData) throw new Error("No post data in response");
+            
+            // set defaults for numSmallOnPage1 and numColsOnPage2
+            onResetDisplayOptions(thisPostData);
+            setPostData(thisPostData);
         } catch (e) {
             console.log(e);
+        }
+    }
+
+    function onResetDisplayOptions(thisPostData: APIPostData | null) {
+        if (!thisPostData) return;
+        const numPosts = thisPostData.edge_sidecar_to_children?.edges.length;
+        if (thisPostData.edge_sidecar_to_children && numPosts) {
+            // if children, set defaults of num small and num cols
+            if (numPosts <= 3 || (numPosts >= 5 && numPosts <= 12)) setShowBig(true);
+
+            let thisNumSmallOnPage1 = 2;
+            if (numPosts === 4) thisNumSmallOnPage1 = 4;
+            if (numPosts >= 13) thisNumSmallOnPage1 = 6;
+            setNumSmallOnPage1(thisNumSmallOnPage1);
+
+            let thisNumColsOnPage2 = 2;
+            if (numPosts >= 8) thisNumColsOnPage2 = 3;
+            setNumColsOnPage2(thisNumColsOnPage2);
+        } else {
+            // otherwise just show big
+            setShowBig(true);
         }
     }
 
     let slides2 = null;
     let slides3 = null;
     let bigUrl = null;
-    let numCols = 2;
 
     const numPosts = postData?.edge_sidecar_to_children?.edges.length;
 
     if (postData?.edge_sidecar_to_children && numPosts) {
-        if (numPosts <= 3 || (numPosts >= 5 && numPosts <= 12)) {
-            bigUrl = postData.edge_sidecar_to_children.edges[0].node.display_url;
-        }
-
-        const slides2Start = bigUrl ? 1 : 0; // starting index, inclusive
-
-        let slides2Length = 2;
-        if (numPosts === 4) slides2Length = 4;
-        if (numPosts >= 13) slides2Length = 6;
-
-        slides2 = postData?.edge_sidecar_to_children.edges.filter((d, i) => (i >= slides2Start) && (i < slides2Start + slides2Length));
-
-        if (numPosts >= 8) numCols = 3;
-
-        slides3 = postData?.edge_sidecar_to_children.edges.filter((d, i) => i >= slides2Start + slides2Length);
+        if (showBig) bigUrl = postData.edge_sidecar_to_children.edges[0].node.display_url;
+        const slides2Start = showBig ? 1 : 0; // starting index, inclusive
+        slides2 = postData?.edge_sidecar_to_children.edges.filter((d, i) => (i >= slides2Start) && (i < slides2Start + numSmallOnPage1));
+        slides3 = postData?.edge_sidecar_to_children.edges.filter((d, i) => i >= slides2Start + numSmallOnPage1);
     } else {
         bigUrl = postData?.display_url;
     }
@@ -63,7 +81,21 @@ export default function Page() {
                 </div>
                 <div className="flex items-center gap-2">
                     <input type="text" value={shortcode} onChange={e => setShortcode(e.target.value)} className="border p-2 w-full rounded" placeholder="Post shortcode" />
-                    <button className="p-2 bg-gray-900 text-white disabled:opacity-50 rounded" onClick={onSubmit} disabled={!shortcode}>Submit</button>
+                    <button className="p-2 bg-gray-900 text-white disabled:opacity-50 rounded hover:bg-gray-700" onClick={onSubmit} disabled={!shortcode}>Submit</button>
+                </div>
+                <p className="mt-8 mb-4"><b>Display options</b></p>
+                <div className="flex items-center gap-2">
+                    <input type="checkbox" id="showBigCheck" disabled={!postData} checked={showBig} onChange={e => setShowBig(e.target.checked)}/>
+                    <label htmlFor="showBigCheck">Show big image on page 1</label>
+                </div>
+                <label className="block uppercase font-medium mb-2 mt-4 text-xs text-neutral-500">Number of small slides on page 1</label>
+                <input type="number" value={numSmallOnPage1} className="border rounded p-2 disabled:opacity-50" onChange={e => setNumSmallOnPage1(+e.target.value)} placeholder="Number small on page 1" disabled={!postData} step={1} min={0} max={(numPosts === undefined) ? 0 : (numPosts - (+showBig))}/>
+                <label className="block uppercase font-medium mb-2 mt-4 text-xs text-neutral-500">Number of columns on page 1</label>
+                <input type="number" value={numColsOnPage1} className="border rounded p-2 disabled:opacity-50" onChange={e => setNumColsOnPage1(+e.target.value)} placeholder="Number columns on page 1" disabled={!postData} step={1} min={2} max={3}/>
+                <label className="block uppercase font-medium mb-2 mt-4 text-xs text-neutral-500">Number of columns on page 2</label>
+                <input type="number" value={numColsOnPage2} className="border rounded p-2 disabled:opacity-50" onChange={e => setNumColsOnPage2(+e.target.value)} placeholder="Number columns on page 2" disabled={!postData} step={1} min={2} max={3}/>
+                <div className="mt-4">
+                    <button className="p-2 bg-gray-900 text-white rounded disabled:opacity-50 hover:bg-gray-700" onClick={() => onResetDisplayOptions(postData)} disabled={!postData}>Reset to defaults</button>
                 </div>
             </div>
             {postData && (
@@ -106,23 +138,23 @@ export default function Page() {
                                 )}
                             </div>
                             <div className="grow">
-                                {bigUrl && (
+                                {(showBig && bigUrl) && (
                                     <ProxiedImage url={bigUrl} className="w-full"/>
                                 )}
-                                {slides2?.length && (
-                                    <div className="flex gap-[0.2in] mt-[0.2in] pr-[0.2in]">
+                                {!!slides2?.length && (
+                                    <div className={classNames("pr-[0.2in] mt-[0.15in] gap-[0.15in] grid", numColsOnPage1 === 2 && "grid-cols-2", numColsOnPage1 === 3 && "grid-cols-3")}>
                                         {slides2.map((slide) => (
-                                            <ProxiedImage url={slide.node.display_url} className="w-1/2" key={slide.node.id}/>
+                                            <ProxiedImage url={slide.node.display_url} key={slide.node.id}/>
                                         ))}
                                     </div>
                                 )}
                             </div>
                         </div>
                     </div>  
-                    {slides3?.length && (
+                    {!!slides3?.length && (
                         <div style={{ width: "8.5in", height: "11in", paddingRight: "0.25in", paddingTop: "0.25in", paddingBottom: "0.25in" }}>
                             <div className="w-full h-full border-t border-r border-b border-neutral-300">
-                                <div className={classNames("grid gap-[0.2in]", numCols === 2 && "grid-cols-2", numCols === 3 && "grid-cols-3")} style={{padding: "0.2in"}}>    
+                                <div className={classNames("grid gap-[0.15in]", numColsOnPage2 === 2 && "grid-cols-2", numColsOnPage2 === 3 && "grid-cols-3")} style={{padding: "0.2in"}}>    
                                     {slides3.map((slide, i) => (
                                         <ProxiedImage url={slide.node.display_url} key={slide.node.id}/>
                                     ))}
