@@ -68,8 +68,8 @@ export default function Page() {
             </div>
             {postData && (
                 <>
-                    <div style={{ width: "8.5in", height: "11in", paddingLeft: "0.25in", paddingTop: "0.25in", paddingBottom: "0.25in" }}>
-                        <div className="border-l border-t border-b border-neutral-300 flex w-full h-full">
+                    <div style={{ width: "8.5in", height: "11in", paddingLeft: "0.25in", paddingTop: "0.25in", paddingBottom: "0.25in", paddingRight: slides3?.length ? 0 : "0.25in" }}>
+                        <div className={classNames("border-l border-t border-b border-neutral-300 flex w-full h-full", !slides3?.length && "border-r")}>
                             <div className="w-1/3 shrink-0" style={{ padding: "0.2in" }}>
                                 <div className="flex items-center gap-2 mb-2">
                                     <ProxiedImage className="w-6 h-6 rounded-full" url={postData.owner.profile_pic_url}/>
