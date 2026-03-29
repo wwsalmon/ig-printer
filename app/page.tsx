@@ -3,9 +3,9 @@
 import ProxiedImage from "@/lib/ProxiedImage";
 import { useEffect, useRef, useState } from "react";
 import { getPostFromShortcode } from "./actions/getPostFromShortcode";
-import { APIPostData } from "./types";
+import { APIPostData, APIPostDataSlide } from "./types";
 import classNames from "classnames";
-import {FaComments, FaHeart} from "react-icons/fa";
+import {FaComments, FaHeart, FaPlayCircle, FaVideo} from "react-icons/fa";
 
 export default function Page() {
     const [shortcode, setShortcode] = useState("");
@@ -21,6 +21,7 @@ export default function Page() {
             // get postData using server function
             const json = await getPostFromShortcode(shortcode);
             const thisPostData = json.data.xdt_shortcode_media;
+            console.log(thisPostData);
             if (!thisPostData) throw new Error("No post data in response");
             
             // set defaults for numSmallOnPage1 and numColsOnPage2
@@ -54,17 +55,17 @@ export default function Page() {
 
     let slides2 = null;
     let slides3 = null;
-    let bigUrl = null;
+    let bigSlide = null;
 
     const numPosts = postData?.edge_sidecar_to_children?.edges.length;
 
     if (postData?.edge_sidecar_to_children && numPosts) {
-        if (showBig) bigUrl = postData.edge_sidecar_to_children.edges[0].node.display_url;
+        if (showBig) bigSlide = postData.edge_sidecar_to_children.edges[0].node;
         const slides2Start = showBig ? 1 : 0; // starting index, inclusive
         slides2 = postData?.edge_sidecar_to_children.edges.filter((d, i) => (i >= slides2Start) && (i < slides2Start + numSmallOnPage1));
         slides3 = postData?.edge_sidecar_to_children.edges.filter((d, i) => i >= slides2Start + numSmallOnPage1);
     } else {
-        bigUrl = postData?.display_url;
+        bigSlide = postData;
     }
     
     return (
@@ -139,13 +140,13 @@ export default function Page() {
                                 )}
                             </div>
                             <div className="grow">
-                                {(showBig && bigUrl) && (
-                                    <ProxiedImage url={bigUrl} className="w-full"/>
+                                {(showBig && bigSlide) && (
+                                    <Slide slide={bigSlide}/>
                                 )}
                                 {!!slides2?.length && (
                                     <div className={classNames("pr-[0.2in] mt-[0.15in] gap-[0.15in] grid", numColsOnPage1 === 2 && "grid-cols-2", numColsOnPage1 === 3 && "grid-cols-3")}>
                                         {slides2.map((slide) => (
-                                            <ProxiedImage url={slide.node.display_url} key={slide.node.id}/>
+                                            <Slide slide={slide.node} key={slide.node.id}/>
                                         ))}
                                     </div>
                                 )}
@@ -156,8 +157,8 @@ export default function Page() {
                         <div style={{ width: "8.5in", height: "11in", paddingRight: "0.25in", paddingTop: "0.25in", paddingBottom: "0.25in" }}>
                             <div className="w-full h-full border-t border-r border-b border-neutral-300">
                                 <div className={classNames("grid gap-[0.15in]", numColsOnPage2 === 2 && "grid-cols-2", numColsOnPage2 === 3 && "grid-cols-3")} style={{padding: "0.2in"}}>    
-                                    {slides3.map((slide, i) => (
-                                        <ProxiedImage url={slide.node.display_url} key={slide.node.id}/>
+                                    {slides3.map((slide) => (
+                                        <Slide slide={slide.node} key={slide.node.id}/>
                                     ))}
                                 </div>
                             </div>
@@ -167,4 +168,17 @@ export default function Page() {
             )}
         </>
     );
+}
+
+function Slide({slide}: {slide: APIPostDataSlide}) {
+    return slide.is_video ? (
+        <div className="relative">
+            <ProxiedImage url={slide.display_url}/>
+            <div className="absolute top-2 right-2 text-white text-xs">
+                <FaVideo/>
+            </div>
+        </div>
+    ) : (
+        <ProxiedImage url={slide.display_url}/>
+    )
 }

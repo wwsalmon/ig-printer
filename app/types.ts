@@ -5,6 +5,7 @@ export interface APIResponse {
 }
 
 export interface APIPostData {
+    id: string,
     coauthor_producers: {
         id: string,
         profile_pic_url: string,
@@ -13,13 +14,7 @@ export interface APIPostData {
     dimensions: { height: number, width: number },
     display_url: string,
     edge_sidecar_to_children?: {
-        edges: {
-            node: {
-                id: string,
-                display_url: string,
-                is_video: boolean,
-            }
-        }[],
+        edges: {node: APIPostDataSlide}[],
     },
     owner: {
         full_name: string,
@@ -39,5 +34,12 @@ export interface APIPostData {
             }
         }[]
     },
+    is_video: boolean,
     taken_at_timestamp: number,
+}
+
+export interface APIPostDataSlide {
+    id: string,
+    display_url: string,
+    is_video: boolean,
 }
