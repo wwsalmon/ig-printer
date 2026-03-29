@@ -1,7 +1,7 @@
 "use client";
 
 import ProxiedImage from "@/lib/ProxiedImage";
-import { useState } from "react";
+import { useEffect, useRef, useState } from "react";
 import { getPostFromShortcode } from "./actions/getPostFromShortcode";
 import { APIPostData } from "./types";
 import classNames from "classnames";
@@ -16,6 +16,7 @@ export default function Page() {
     const [numColsOnPage2, setNumColsOnPage2] = useState(2);
 
     async function onSubmit() {
+        if (!shortcode) return;
         try {
             // get postData using server function
             const json = await getPostFromShortcode(shortcode);
@@ -81,7 +82,7 @@ export default function Page() {
                 </div>
                 <div className="flex items-center gap-2">
                     <input type="text" value={shortcode} onChange={e => setShortcode(e.target.value)} className="border p-2 w-full rounded" placeholder="Post shortcode" />
-                    <button className="p-2 bg-gray-900 text-white disabled:opacity-50 rounded hover:bg-gray-700" onClick={onSubmit} disabled={!shortcode}>Submit</button>
+                    <button className="p-2 bg-gray-900 text-white disabled:opacity-50 rounded hover:bg-gray-700" onClick={onSubmit}>Submit</button>
                 </div>
                 <p className="mt-8 mb-4"><b>Display options</b></p>
                 <div className="flex items-center gap-2">
