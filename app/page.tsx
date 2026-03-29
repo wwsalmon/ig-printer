@@ -98,9 +98,9 @@ export default function Page() {
                                     </div>
                                 </div>
                                 {postData.edge_media_to_caption.edges.length && (
-                                    <div className="text-[8.5pt] pt-4 mt-4 border-t border-t-neutral-300">
+                                    <div className="text-[7pt] pt-4 mt-4 border-t border-t-neutral-300">
                                         {postData.edge_media_to_caption.edges[0].node.text.split("\n").map((paragraph, i) => (
-                                            <p key={i} className="mb-[8.5pt]">{paragraph}</p>
+                                            <p key={i} className="mb-[7pt]">{paragraph}</p>
                                         ))}
                                     </div>
                                 )}
