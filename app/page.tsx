@@ -1,11 +1,11 @@
 "use client";
 
 import ProxiedImage from "@/lib/ProxiedImage";
-import { useEffect, useRef, useState } from "react";
+import classNames from "classnames";
+import { useState } from "react";
+import { FaComments, FaHeart, FaVideo } from "react-icons/fa";
 import { getPostFromShortcode } from "./actions/getPostFromShortcode";
 import { APIPostData, APIPostDataSlide } from "./types";
-import classNames from "classnames";
-import {FaComments, FaHeart, FaPlayCircle, FaVideo} from "react-icons/fa";
 
 export default function Page() {
     const [shortcode, setShortcode] = useState("");
@@ -21,13 +21,15 @@ export default function Page() {
             // get postData using server function
             const json = await getPostFromShortcode(shortcode);
             const thisPostData = json.data.xdt_shortcode_media;
+            alert("Post successfully fetched, scroll down to preview");
             console.log(thisPostData);
             if (!thisPostData) throw new Error("No post data in response");
             
             // set defaults for numSmallOnPage1 and numColsOnPage2
             onResetDisplayOptions(thisPostData);
             setPostData(thisPostData);
-        } catch (e) {
+        } catch (e: any) {
+            alert(`Error fetching post: ${e.message}`);
             console.log(e);
         }
     }
@@ -51,6 +53,10 @@ export default function Page() {
             // otherwise just show big
             setShowBig(true);
         }
+    }
+
+    function onPrint() {
+        if (window) window.print();
     }
 
     let slides2 = null;
@@ -77,15 +83,16 @@ export default function Page() {
                     <p><b>How to use:</b></p>
                     <ol>
                         <li>Enter the post shortcode (for example: <b>DDfGct6ybBc</b> in the url "https://www.instagram.com/p/<b>DDfGct6ybBc</b>/") in the field below and hit "Submit"</li>
-                        <li>Wait for the page to fully load</li>
-                        <li>Use your browser to Print the page. Save as a PDF if desired.</li>
+                        <li>Wait for the page to fully load. Scroll down for preview, and adjust display options accordingly.</li>
+                        <li>Use your browser to Print the page, or press the button below. Save as a PDF if desired.</li>
                     </ol>
                 </div>
                 <div className="flex items-center gap-2">
                     <input type="text" value={shortcode} onChange={e => setShortcode(e.target.value)} className="border p-2 w-full rounded" placeholder="Post shortcode" />
                     <button className="p-2 bg-gray-900 text-white disabled:opacity-50 rounded hover:bg-gray-700" onClick={onSubmit}>Submit</button>
                 </div>
-                <p className="mt-8 mb-4"><b>Display options</b></p>
+                <button className="block w-full my-4 p-2 bg-gray-900 text-white disabled:opacity-50 rounded hover:bg-gray-700" onClick={onPrint} disabled={!postData}>Print</button>
+                <p className="mt-8 mb-4"><b>Display options (changes reflected live):</b></p>
                 <div className="flex items-center gap-2">
                     <input type="checkbox" id="showBigCheck" disabled={!postData} checked={showBig} onChange={e => setShowBig(e.target.checked)}/>
                     <label htmlFor="showBigCheck">Show big image on page 1</label>
